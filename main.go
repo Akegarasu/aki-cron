@@ -11,12 +11,14 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 )
 
 var (
 	cronConfig string
 	missions   []*cronMission
+	sysType    = runtime.GOOS
 )
 
 type cronMission struct {
@@ -27,9 +29,13 @@ type cronMission struct {
 
 func init() {
 	flag.StringVar(&cronConfig, "c", "cron", "cron config file")
+	ls := "\n"
+	if sysType == "windows" {
+		ls = "\r\n"
+	}
 	log.SetFormatter(&easy.Formatter{
 		TimestampFormat: "2006-01-02 15:04:05",
-		LogFormat:       "[%time%][%lvl%]: %msg% \n",
+		LogFormat:       "[%time%][%lvl%]: %msg% " + ls,
 	})
 	log.SetLevel(log.InfoLevel)
 	if !pathExists("logs") {
