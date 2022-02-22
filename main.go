@@ -53,7 +53,7 @@ func main() {
 	cfg := strings.ReplaceAll(string(file), "\r\n", "\n")
 	lines := strings.Split(cfg, "\n")
 	for _, line := range lines {
-		if strings.HasPrefix(line, "//") || strings.HasPrefix(line, "#") {
+		if strings.HasPrefix(line, "//") || strings.HasPrefix(line, "#") || len(line) == 0 {
 			continue
 		}
 		spl := strings.Split(line, " ")
