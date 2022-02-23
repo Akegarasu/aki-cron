@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"errors"
 	"flag"
 	"fmt"
@@ -16,9 +17,10 @@ import (
 )
 
 var (
-	cronConfig string
-	missions   []*cronMission
-	sysType    = runtime.GOOS
+	cronConfig     string
+	redirectOutput bool
+	missions       []*cronMission
+	sysType        = runtime.GOOS
 )
 
 type cronMission struct {
@@ -29,6 +31,7 @@ type cronMission struct {
 
 func init() {
 	flag.StringVar(&cronConfig, "c", "cron", "cron config file")
+	flag.BoolVar(&redirectOutput, "o", false, "redirect command stdout/stderr to log")
 	ls := "\n"
 	if sysType == "windows" {
 		ls = "\r\n"
@@ -90,9 +93,25 @@ func main() {
 		_, err := c.AddFunc(cronExp, func() {
 			log.Infof("run: %s %s", cronExp, fullCmd)
 			cmd := exec.Command(command, cmdArgs...)
-			err := cmd.Run()
-			if err != nil {
-				log.Errorf("%s %s exec failed: %s", cronExp, fullCmd, err)
+			if redirectOutput {
+				stdout, _ := cmd.StdoutPipe()
+				stderr, _ := cmd.StderrPipe()
+				multi := io.MultiReader(stdout, stderr)
+				if err := cmd.Start(); err != nil {
+					log.Errorf("%s %s exec failed: %s", cronExp, fullCmd, err)
+				}
+				in := bufio.NewScanner(multi)
+				for in.Scan() {
+					log.Infof(in.Text())
+				}
+				if err := in.Err(); err != nil {
+					log.Errorf("error: %s", err)
+				}
+			} else {
+				err := cmd.Run()
+				if err != nil {
+					log.Errorf("%s %s exec failed: %s", cronExp, fullCmd, err)
+				}
 			}
 		})
 		if err != nil {

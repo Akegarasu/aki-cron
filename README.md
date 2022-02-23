@@ -11,6 +11,6 @@ windows run
 options
     -c string
       cron config file (default "cron")
+    -o
+      redirect command stdout/stderr to log
 ```
-
-
