@@ -1,5 +1,8 @@
 */3 * * * * ? python 1.py
-// 注释测试
+// 注释测试1
 * * * * * ? python main.py
+
 1 0 0 * * ? node C:\test\index.js
+
+# 注释测试2
 */5 * * * * ? echo 1 2 3
