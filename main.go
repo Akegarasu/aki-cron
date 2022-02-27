@@ -12,6 +12,8 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path"
+	"path/filepath"
 	"runtime"
 	"strings"
 )
@@ -21,6 +23,7 @@ var (
 	redirectOutput bool
 	missions       []*cronMission
 	sysType        = runtime.GOOS
+	executablePath string
 )
 
 type cronMission struct {
@@ -41,20 +44,22 @@ func init() {
 		LogFormat:       "[%time%][%lvl%]: %msg% " + ls,
 	})
 	log.SetLevel(log.InfoLevel)
-	if !pathExists("logs") {
-		if err := os.MkdirAll("logs", 0o755); err != nil {
+	executablePath, _ = os.Executable()
+	logPath := path.Join(filepath.Dir(executablePath), "logs")
+	if !pathExists(logPath) {
+		if err := os.MkdirAll(logPath, 0o755); err != nil {
 			log.Fatalf("failed create log folder")
 		}
 		log.Info("created log folder")
 	}
-	r, _ := rotatelogs.New("./logs/cron_log.%Y-%m-%d.log")
+	r, _ := rotatelogs.New(path.Join(filepath.Dir(executablePath), "logs", "cron_log.%Y-%m-%d.log"))
 	mw := io.MultiWriter(os.Stdout, r)
 	log.SetOutput(mw)
 }
 
 func main() {
 	flag.Parse()
-	file, err := os.ReadFile(cronConfig)
+	file, err := os.ReadFile(path.Join(filepath.Dir(executablePath), cronConfig))
 	if err != nil {
 		log.Fatal("cannot read config file")
 	}
